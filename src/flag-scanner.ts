@@ -54,6 +54,8 @@ export function scanForFlags(
   if (!lastAssistantText) return null;
 
   // Scan for persona flags
+  // Reset lastIndex since the regex is global and module-level
+  FLAG_PATTERN.lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = FLAG_PATTERN.exec(lastAssistantText)) !== null) {
     const flagName = match[1]!;

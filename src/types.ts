@@ -29,16 +29,24 @@ export interface Situation {
   trigger: TriggerType;
   /** Human-readable description of when this plays */
   description: string;
-  /** Sound filenames (resolved relative to sounds/<persona>/) */
+  /** Sound filenames (resolved relative to persona sounds/ dir) */
   sounds: string[];
 }
 
-/** The user-facing config file */
-export interface ClaudePersonaConfig {
-  /** Name of the sound pack / character (maps to sounds/<persona>/) */
-  persona: string;
+/** The persona.json file inside a persona directory */
+export interface PersonaConfig {
+  /** Display name of the persona */
+  name: string;
+  /** Human-readable description */
+  description: string;
   /** All configured situations */
   situations: Situation[];
+}
+
+/** The active.json file that points to the current persona */
+export interface ActiveConfig {
+  /** Name of the active persona (matches directory name in personas/) */
+  persona: string;
 }
 
 /** JSON payload from Claude Code hooks via stdin */
@@ -82,11 +90,4 @@ export interface ClaudeHookMatcher {
 export interface ClaudeSettings {
   hooks?: Record<string, ClaudeHookMatcher[]>;
   [key: string]: unknown;
-}
-
-/** CLI handler args parsed from process.argv */
-export interface HandlerArgs {
-  event: string;
-  flags: boolean;
-  config: string;
 }

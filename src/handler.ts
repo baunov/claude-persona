@@ -4,14 +4,16 @@
  * claude-persona hook handler
  *
  * Called by Claude Code hooks with:
- *   node handler.js --event <HookEvent> [--flags] --config <path>
+ *   node handler.js --event <HookEvent> [--flags] --config <path/to/active.json>
  *
- * Reads hook JSON from stdin, resolves a situation, plays a sound.
+ * Reads hook JSON from stdin, resolves the active persona, plays a sound.
  */
 
 import path from 'node:path';
 import {
-  loadConfig,
+  loadActiveConfig,
+  resolvePersonaDir,
+  loadPersonaConfig,
   resolveSoundPath,
   getSituationsForTrigger,
   getSituationByName,
@@ -54,7 +56,6 @@ async function readStdin(): Promise<string> {
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', (chunk) => { data += chunk; });
     process.stdin.on('end', () => resolve(data));
-    // If stdin isn't piped, resolve immediately
     if (process.stdin.isTTY) resolve('{}');
   });
 }
@@ -73,14 +74,17 @@ async function main(): Promise<void> {
     hookInput = { session_id: '', hook_event_name: args.event };
   }
 
+  // Load active.json → persona dir → persona.json
+  let personaDir: string;
   let personaConfig;
   try {
-    personaConfig = loadConfig(args.config);
+    const activeConfig = loadActiveConfig(args.config);
+    const configDir = path.dirname(args.config);
+    personaDir = resolvePersonaDir(configDir, activeConfig.persona);
+    personaConfig = loadPersonaConfig(personaDir);
   } catch {
     process.exit(0);
   }
-
-  const configDir = path.dirname(args.config);
 
   // Flag scanning mode (async Stop hook)
   if (args.flags) {
@@ -94,13 +98,12 @@ async function main(): Promise<void> {
       const situation = getSituationByName(personaConfig, matchedFlag);
       if (situation) {
         const soundPaths = situation.sounds.map((s) =>
-          resolveSoundPath(configDir, personaConfig.persona, s),
+          resolveSoundPath(personaDir, s),
         );
         await playRandom(soundPaths);
       }
     }
 
-    // Give sound time to start before exiting
     await new Promise((resolve) => setTimeout(resolve, 1500));
     process.exit(0);
   }
@@ -126,7 +129,7 @@ async function main(): Promise<void> {
   }
 
   const soundPaths = situation.sounds.map((s) =>
-    resolveSoundPath(configDir, personaConfig.persona, s),
+    resolveSoundPath(personaDir, s),
   );
 
   await playRandom(soundPaths);

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import type { ClaudeSettings } from '../types.js';
+import { removeClaudeMdReference } from './shared.js';
 
 interface UninstallOptions {
   global?: boolean;
@@ -36,9 +37,9 @@ export async function uninstallCommand(options: UninstallOptions): Promise<void>
   // 1. Remove hooks from Claude settings
   removeHooks(settingsPath);
 
-  // 2. Remove CLAUDE.md persona flags section (project only)
+  // 2. Remove CLAUDE.md reference and flags file (project only)
   if (isProject) {
-    removeClaudeMdFlags();
+    removePersonaFlags();
   }
 
   // 3. Clean up spam detector temp file
@@ -75,7 +76,7 @@ function removeHooks(settingsPath: string): void {
     for (const event of Object.keys(settings.hooks)) {
       const before = settings.hooks[event]!.length;
       settings.hooks[event] = settings.hooks[event]!.filter(
-        (m) => !m.hooks.some((h) => h.command.includes('claude-persona')),
+        (m) => !m.hooks.some((h) => h.command.includes('#claude-persona')),
       );
       removed += before - settings.hooks[event]!.length;
 
@@ -102,42 +103,17 @@ function removeHooks(settingsPath: string): void {
   }
 }
 
-function removeClaudeMdFlags(): void {
+function removePersonaFlags(): void {
   const claudeMdPath = path.join(process.cwd(), 'CLAUDE.md');
+  const flagsFilePath = path.join(process.cwd(), '.claude', 'persona', 'PERSONA_FLAGS.md');
 
-  if (!fs.existsSync(claudeMdPath)) return;
+  // Remove the @import reference from CLAUDE.md
+  removeClaudeMdReference(claudeMdPath);
 
-  let content = fs.readFileSync(claudeMdPath, 'utf8');
-  const marker = '## Persona Flags';
-
-  if (!content.includes(marker)) return;
-
-  // Remove the entire Persona Flags section (from marker to next ## heading or EOF)
-  const markerIndex = content.indexOf(marker);
-
-  // Find the start — include the preceding newline if present
-  let sectionStart = markerIndex;
-  if (sectionStart > 0 && content[sectionStart - 1] === '\n') {
-    sectionStart--;
-  }
-
-  // Find the end — next ## heading or end of file
-  const afterMarker = content.indexOf('\n## ', markerIndex + marker.length);
-  const sectionEnd = afterMarker === -1 ? content.length : afterMarker;
-
-  content = content.slice(0, sectionStart) + content.slice(sectionEnd);
-
-  // Clean up trailing whitespace
-  content = content.trimEnd() + '\n';
-
-  // If the file is now empty (just whitespace), remove it only if we created it
-  if (content.trim() === '') {
-    // Don't delete — the user may have had an empty CLAUDE.md before
-    fs.writeFileSync(claudeMdPath, '');
-    console.log('  CLAUDE.md: removed persona flags section (file is now empty).');
-  } else {
-    fs.writeFileSync(claudeMdPath, content);
-    console.log('  CLAUDE.md: removed persona flags section.');
+  // Remove the standalone flags file
+  if (fs.existsSync(flagsFilePath)) {
+    fs.unlinkSync(flagsFilePath);
+    console.log('  Removed PERSONA_FLAGS.md');
   }
 }
 

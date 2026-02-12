@@ -1,43 +1,52 @@
-import path from 'node:path';
-import os from 'node:os';
-import fs from 'node:fs';
-import { loadConfig, resolveSoundPath } from '../config.js';
+import {
+  loadActiveConfig,
+  loadPersonaConfig,
+  resolvePersonaDir,
+  resolveSoundPath,
+  listInstalledPersonas,
+} from '../config.js';
 import { playRandom } from '../player.js';
+import { findConfigDir } from './shared.js';
 
 interface TestOptions {
   config?: string;
-}
-
-/** Resolve config path: explicit > project > global */
-function findConfig(explicit?: string): string | null {
-  if (explicit) return explicit;
-
-  const projectConfig = path.join(process.cwd(), '.claude', 'persona', 'claude-persona.json');
-  if (fs.existsSync(projectConfig)) return projectConfig;
-
-  const globalConfig = path.join(os.homedir(), '.claude-persona', 'claude-persona.json');
-  if (fs.existsSync(globalConfig)) return globalConfig;
-
-  return null;
 }
 
 export async function testCommand(
   situation: string | undefined,
   options: TestOptions,
 ): Promise<void> {
-  const configPath = findConfig(options.config);
-  if (!configPath) {
-    console.error('No claude-persona.json found. Run `claude-persona init` first.');
+  const configDir = options.config ?? findConfigDir();
+  if (!configDir) {
+    console.error('claude-persona is not installed. Run `claude-persona init` first.');
     process.exit(1);
   }
 
-  const config = loadConfig(configPath);
-  const configDir = path.dirname(configPath);
+  let personaName: string;
+  try {
+    const activeConfig = loadActiveConfig(`${configDir}/active.json`);
+    personaName = activeConfig.persona;
+  } catch {
+    console.error('No active persona found. Run `claude-persona init` first.');
+    process.exit(1);
+  }
+
+  const personaDir = resolvePersonaDir(configDir, personaName);
+  const config = loadPersonaConfig(personaDir);
 
   if (!situation) {
-    // List all situations
-    console.log(`Persona: ${config.persona}\n`);
-    console.log('Situations:');
+    const installed = listInstalledPersonas(configDir);
+
+    console.log(`Active persona: ${config.name}`);
+    if (config.description) {
+      console.log(`  ${config.description}`);
+    }
+
+    if (installed.length > 1) {
+      console.log(`\nInstalled personas: ${installed.map((p) => p.name).join(', ')}`);
+    }
+
+    console.log('\nSituations:');
     for (const s of config.situations) {
       console.log(`  ${s.name.padEnd(20)} [${s.trigger}] ${s.sounds.length} sound(s) — ${s.description}`);
     }
@@ -53,7 +62,7 @@ export async function testCommand(
   }
 
   const soundPaths = match.sounds.map((s) =>
-    resolveSoundPath(configDir, config.persona, s),
+    resolveSoundPath(personaDir, s),
   );
 
   console.log(`Playing "${match.name}" (${match.sounds.length} sound(s))...`);

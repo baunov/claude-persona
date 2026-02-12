@@ -1,5 +1,6 @@
 {
-  "persona": "peasant",
+  "name": "peasant",
+  "description": "Warcraft 3 peasant (Russian voice lines)",
   "situations": [
     {
       "name": "prompt-submitted",
