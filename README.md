@@ -91,13 +91,37 @@ You can add your own flag situations — just add an entry with `"trigger": "fla
 ## CLI Commands
 
 ```bash
-claude-persona init --global     # Install globally
-claude-persona init --project    # Install for current project
-claude-persona test              # List all situations
-claude-persona test task-complete # Play a random sound for "task-complete"
-claude-persona uninstall --global   # Remove global hooks
-claude-persona uninstall --project  # Remove project hooks
+claude-persona init --global              # Install globally
+claude-persona init --project             # Install for current project
+claude-persona test                       # List all situations
+claude-persona test task-complete         # Play a random sound for "task-complete"
+claude-persona uninstall --global         # Remove global hooks
+claude-persona uninstall --project        # Remove project hooks
+claude-persona uninstall --project --purge  # Full removal (hooks + sounds + config)
 ```
+
+## Uninstalling
+
+Remove hooks from Claude Code settings:
+
+```bash
+# If you installed globally
+npx claude-persona uninstall --global
+
+# If you installed per-project
+npx claude-persona uninstall --project
+```
+
+This removes all hooks from your Claude settings and cleans up the `## Persona Flags` section from CLAUDE.md. Your sounds and config are kept in case you want to re-install later.
+
+To remove everything (hooks, sounds, config):
+
+```bash
+npx claude-persona uninstall --project --purge
+npx claude-persona uninstall --global --purge
+```
+
+All commands are idempotent — safe to run multiple times.
 
 ## Custom Sound Packs
 

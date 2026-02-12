@@ -30,6 +30,7 @@ program
   .description('Remove claude-persona hooks from Claude Code')
   .option('--global', 'Remove from global settings')
   .option('--project', 'Remove from project settings')
+  .option('--purge', 'Also delete sounds, config, and CLAUDE.md section')
   .action(uninstallCommand);
 
 program.parse();
