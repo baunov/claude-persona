@@ -1,0 +1,82 @@
+{
+  "persona": "peasant",
+  "situations": [
+    {
+      "name": "prompt-submitted",
+      "trigger": "UserPromptSubmit",
+      "description": "User sends a prompt",
+      "sounds": [
+        "да господин.wav",
+        "угу.wav",
+        "хорошо.wav",
+        "ну я пошел.wav",
+        "опять работать.wav",
+        "чего.wav"
+      ]
+    },
+    {
+      "name": "task-complete",
+      "trigger": "Stop",
+      "description": "Claude finished responding",
+      "sounds": ["готово.mp3", "я готов.wav", "да.wav", "хорошо.wav"]
+    },
+    {
+      "name": "tool-failed",
+      "trigger": "PostToolUseFailure",
+      "description": "A tool call failed",
+      "sounds": [
+        "меня убьют.wav",
+        "ооо.wav",
+        "придется драться.wav",
+        "здесь нельзя строить.m4a"
+      ]
+    },
+    {
+      "name": "session-start",
+      "trigger": "SessionStart",
+      "description": "New session begins",
+      "sounds": ["опять работать.wav", "я готов.wav", "да господин.wav"]
+    },
+    {
+      "name": "session-end",
+      "trigger": "SessionEnd",
+      "description": "Session ends",
+      "sounds": ["смерть.mp3", "прощайте.wav", "ну я пошел.wav"]
+    },
+    {
+      "name": "notification",
+      "trigger": "Notification",
+      "description": "Claude needs attention or permission",
+      "sounds": ["на меня давят.wav", "чего.wav"]
+    },
+    {
+      "name": "subagent-start",
+      "trigger": "SubagentStart",
+      "description": "A subagent is spawned",
+      "sounds": ["работа не волк.wav"]
+    },
+    {
+      "name": "admitted-wrong",
+      "trigger": "flag",
+      "description": "Claude admits a mistake or corrects itself",
+      "sounds": [
+        "вам меня не жалко.wav",
+        "меня убьют.wav",
+        "ооо.wav",
+        "тебя бы так.wav"
+      ]
+    },
+    {
+      "name": "found-bug",
+      "trigger": "flag",
+      "description": "Claude found or fixed a bug",
+      "sounds": ["мы поймали ведьму.wav"]
+    },
+    {
+      "name": "spam-detected",
+      "trigger": "spam",
+      "description": "User sending too many prompts too fast",
+      "sounds": ["ты что ли король.wav", "на меня давят.wav", "тебя бы так.wav"]
+    }
+  ]
+}

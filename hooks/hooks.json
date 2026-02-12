@@ -1,0 +1,86 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event UserPromptSubmit --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event Stop --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\""
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event Stop --flags --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\"",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event PostToolUseFailure --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event SessionStart --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\""
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event SessionEnd --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\""
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event Notification --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\""
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PLUGIN_ROOT/dist/handler.js\" --event SubagentStart --config \"$CLAUDE_PLUGIN_ROOT/defaults/claude-persona.json\""
+          }
+        ]
+      }
+    ]
+  }
+}

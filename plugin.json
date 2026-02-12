@@ -1,0 +1,5 @@
+{
+  "name": "claude-persona",
+  "version": "0.1.0",
+  "description": "Sound effects for Claude Code sessions — configurable audio feedback for hooks and events"
+}

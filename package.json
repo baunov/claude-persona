@@ -1,0 +1,46 @@
+{
+  "name": "claude-persona",
+  "version": "0.1.0",
+  "description": "Sound effects for Claude Code sessions — configurable audio feedback for hooks and events",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "claude-persona": "./dist/cli/index.js"
+  },
+  "main": "./dist/handler.js",
+  "files": [
+    "dist",
+    "sounds",
+    "defaults",
+    "hooks",
+    "plugin.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "play-sound": "^1.1.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "hooks",
+    "sound",
+    "audio",
+    "persona",
+    "notifications"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/claude-persona"
+  }
+}
