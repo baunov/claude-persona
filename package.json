@@ -1,6 +1,6 @@
 {
   "name": "claude-persona",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Sound effects for Claude Code sessions — configurable audio feedback for hooks and events",
   "license": "MIT",
   "type": "module",
