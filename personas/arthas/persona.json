@@ -1,83 +1,102 @@
 {
-  "name": "peasant",
-  "description": "Warcraft 3 peasant (Russian voice lines)",
+  "name": "arthas",
+  "description": "Warcraft 3 Arthas, Paladin of the Alliance (Russian voice lines)",
   "situations": [
     {
       "name": "prompt-submitted",
       "trigger": "UserPromptSubmit",
       "description": "User sends a prompt",
       "sounds": [
-        "yes-milord.wav",
-        "uh-huh.wav",
-        "alright.wav",
-        "well-im-off.wav",
-        "work-again.wav",
-        "what.wav"
+        "in-the-name-of-justice.m4a",
+        "where-is-the-enemy.m4a",
+        "for-lordaeron.m4a",
+        "for-honor-and-valor.m4a",
+        "of-course.m4a",
+        "naturally.m4a"
       ]
     },
     {
       "name": "task-complete",
       "trigger": "Stop",
       "description": "Claude finished responding",
-      "sounds": ["done.mp3", "im-ready.wav", "yes.wav", "alright.wav"]
+      "sounds": [
+        "excellent-plan.m4a",
+        "the-light-empowers.m4a",
+        "the-light-guides.m4a"
+      ]
     },
     {
       "name": "tool-failed",
       "trigger": "PostToolUseFailure",
       "description": "A tool call failed",
       "sounds": [
-        "theyll-kill-me.wav",
-        "ooh.wav",
-        "have-to-fight.wav",
-        "cant-build-here.m4a"
+        "pathetic-fool.m4a",
+        "theyll-get-whats-coming.m4a",
+        "too-late-for-mercy.m4a"
       ]
     },
     {
       "name": "session-start",
       "trigger": "SessionStart",
       "description": "New session begins",
-      "sounds": ["work-again.wav", "im-ready.wav", "yes-milord.wav"]
+      "sounds": [
+        "light-gives-me-strength.m4a",
+        "i-will-glorify-my.m4a",
+        "being-a-prince-isnt.m4a"
+      ]
     },
     {
       "name": "session-end",
       "trigger": "SessionEnd",
       "description": "Session ends",
-      "sounds": ["death.mp3", "farewell.wav", "well-im-off.wav"]
+      "sounds": [
+        "for-my-father-heavy.m4a"
+      ]
     },
     {
       "name": "notification",
       "trigger": "Notification",
       "description": "Claude needs attention or permission",
-      "sounds": ["im-being-pressured.wav", "what.wav"]
+      "sounds": [
+        "no-need-to-bow.m4a",
+        "where-is-the-enemy.m4a"
+      ]
     },
     {
       "name": "subagent-start",
       "trigger": "SubagentStart",
       "description": "A subagent is spawned",
-      "sounds": ["work-wont-run-away.wav"]
+      "sounds": [
+        "i-serve-the-light.m4a"
+      ]
     },
     {
       "name": "admitted-wrong",
       "trigger": "flag",
       "description": "Claude admits a mistake or corrects itself",
       "sounds": [
-        "dont-you-feel-sorry.wav",
-        "theyll-kill-me.wav",
-        "ooh.wav",
-        "wish-it-were-you.wav"
+        "now-i-truly.m4a",
+        "i-was-just.m4a",
+        "pathetic-fool.m4a"
       ]
     },
     {
       "name": "found-bug",
       "trigger": "flag",
       "description": "Claude found or fixed a bug",
-      "sounds": ["we-caught-a-witch.wav"]
+      "sounds": [
+        "for-my-father.m4a",
+        "too-late-for-mercy.m4a"
+      ]
     },
     {
       "name": "spam-detected",
       "trigger": "spam",
       "description": "User sending too many prompts too fast",
-      "sounds": ["are-you-the-king.wav", "im-being-pressured.wav", "wish-it-were-you.wav"]
+      "sounds": [
+        "no-need-to-bow-harsh.m4a",
+        "i-know-what-im-doing.m4a"
+      ]
     }
   ]
 }
