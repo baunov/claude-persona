@@ -29,7 +29,8 @@ program
 
 program
   .command('add <source>')
-  .description('Install a third-party persona (local path or github:user/repo)')
+  .alias('install')
+  .description('Install a persona (bundled name, local path, or github:user/repo)')
   .option('--name <name>', 'Override the persona name')
   .action(addCommand);
 

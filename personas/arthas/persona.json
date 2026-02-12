@@ -90,6 +90,26 @@
       ]
     },
     {
+      "name": "user-angry",
+      "trigger": "flag",
+      "description": "User is frustrated, angry, or unhappy with the result",
+      "sounds": [
+        "pathetic-fool.m4a",
+        "theyll-get-whats-coming.m4a",
+        "too-late-for-mercy.m4a"
+      ]
+    },
+    {
+      "name": "user-grateful",
+      "trigger": "flag",
+      "description": "User is expressing gratitude, praise, or satisfaction",
+      "sounds": [
+        "the-light-empowers.m4a",
+        "i-serve-the-light.m4a",
+        "excellent-plan.m4a"
+      ]
+    },
+    {
       "name": "spam-detected",
       "trigger": "spam",
       "description": "User sending too many prompts too fast",

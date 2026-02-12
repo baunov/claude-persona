@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { execSync } from 'node:child_process';
-import { loadPersonaConfig } from '../config.js';
-import { findConfigDir, copyPersonaDir } from './shared.js';
+import { loadPersonaConfig, listBundledPersonas } from '../config.js';
+import { findConfigDir, getPackageRoot, copyPersonaDir } from './shared.js';
 
 interface AddOptions {
   name?: string;
@@ -37,8 +37,17 @@ export async function addCommand(source: string, options: AddOptions): Promise<v
 
     sourceDir = tmpDir;
   } else {
-    // Local path
-    sourceDir = path.resolve(source);
+    // Check if it's a bundled persona name (e.g. "peasant", "arthas")
+    const packageRoot = getPackageRoot();
+    const bundled = listBundledPersonas(packageRoot);
+    const bundledMatch = bundled.find((p) => p.name === source);
+
+    if (bundledMatch) {
+      sourceDir = path.join(packageRoot, 'personas', bundledMatch.name);
+    } else {
+      // Local path
+      sourceDir = path.resolve(source);
+    }
   }
 
   // Validate persona structure

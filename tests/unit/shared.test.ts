@@ -70,7 +70,10 @@ describe('findConfigDir', () => {
 
   it('returns null when no config exists', () => {
     process.chdir(tmpDir);
+    // Mock homedir so the global fallback doesn't find the real ~/.claude-persona
+    vi.spyOn(os, 'homedir').mockReturnValue(tmpDir);
     expect(findConfigDir()).toBeNull();
+    vi.restoreAllMocks();
   });
 });
 

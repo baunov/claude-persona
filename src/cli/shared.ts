@@ -188,7 +188,9 @@ export function updateClaudeMdFlags(config: PersonaConfig): void {
 
   const flagsContent = `# Persona Flags
 
-When your response matches one of these situations, include the corresponding HTML comment flag **at the very end** of your text output. The hook system will detect it and play the appropriate sound.
+When a situation below applies, include the corresponding HTML comment flag **at the very end** of your text output. The hook system will detect it and play the appropriate sound.
+
+Flags can match your own response (e.g. you admitted a mistake) **or** the user's input (e.g. the user sounds frustrated or grateful). Read the user's latest message and your own reply to decide which flag fits best.
 
 | Flag | When to use |
 |---|---|
@@ -196,7 +198,8 @@ ${rows}
 
 Rules:
 - Only include ONE flag per response, at the very end
-- Only use when the situation genuinely applies
+- Only use when the situation genuinely applies — don't force it
+- Detecting user sentiment: look for emotional cues in the user's message (frustration, gratitude, excitement, etc.)
 - The flag is invisible to markdown renderers but the hook script reads it from the transcript
 `;
 

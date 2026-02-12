@@ -1,8 +1,8 @@
 # claude-persona
 
-Sound effects for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions. Hear audio feedback when Claude starts a task, finishes responding, hits an error, and more.
+Sound effects for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions. Hear audio feedback when Claude starts a task, finishes responding, hits an error, detects user mood, and more.
 
-Ships with a default Warcraft 3 peasant sound pack. Easily add your own personas with custom sounds and situations.
+Ships with Warcraft 3 peasant and Arthas sound packs. Easily add your own personas with custom sounds and situations.
 
 ## Quick Start
 
@@ -32,8 +32,8 @@ Each persona is a self-contained directory with a `persona.json` config and a `s
 peasant/
 ├── persona.json
 └── sounds/
-    ├── готово.mp3
-    ├── да.wav
+    ├── done.mp3
+    ├── yes-milord.wav
     └── ...
 ```
 
@@ -50,7 +50,7 @@ Each persona has a `persona.json`:
       "name": "task-complete",
       "trigger": "Stop",
       "description": "Claude finished responding",
-      "sounds": ["готово.mp3", "я готов.wav", "да.wav"]
+      "sounds": ["done.mp3", "im-ready.wav", "yes.wav"]
     }
   ]
 }
@@ -70,7 +70,7 @@ Each persona has a `persona.json`:
 |---|---|
 | `name` | Unique identifier. For `flag` triggers, this becomes the flag name. |
 | `trigger` | What fires this situation (see trigger types below). |
-| `description` | Human-readable description. Used in CLAUDE.md for flag situations. |
+| `description` | Human-readable description. For flag triggers, this is the instruction Claude sees in CLAUDE.md. |
 | `sounds` | Array of filenames in the persona's `sounds/` directory. A random one is picked each time. |
 
 ### Trigger types
@@ -87,23 +87,58 @@ Each persona has a `persona.json`:
 | `SubagentStop` | A subagent finishes |
 | `PreToolUse` | Before a tool executes |
 | `PostToolUse` | After a tool succeeds |
-| `flag` | Detected via `<!-- persona:<name> -->` in Claude's response |
+| `flag` | Detected via `<!-- persona:<name> -->` in Claude's response (see below) |
 | `spam` | User sending 3+ prompts within 15 seconds (overrides `UserPromptSubmit`) |
 
 Any [Claude Code hook event](https://docs.anthropic.com/en/docs/claude-code/hooks) can be used as a trigger.
 
 ### Flag situations
 
-Situations with `"trigger": "flag"` are special. Claude self-inserts an HTML comment flag at the end of its response when the situation applies. The hook system detects it from the transcript.
+Situations with `"trigger": "flag"` are the most powerful trigger type. Claude reads the conversation context — both its own response and the user's input — and inserts an invisible HTML comment flag when a situation applies. The hook system detects it from the transcript and plays the corresponding sound.
 
-For this to work, `claude-persona init --project` appends instructions to your `CLAUDE.md`:
+Flags work for two categories of detection:
 
-```markdown
-<!-- persona:admitted-wrong -->   → Claude admits a mistake
-<!-- persona:found-bug -->        → Claude found or fixed a bug
+**Response self-detection** — Claude detects something about its own output:
+
+```json
+{
+  "name": "admitted-wrong",
+  "trigger": "flag",
+  "description": "Claude admits a mistake or corrects itself",
+  "sounds": ["oops.wav", "my-bad.wav"]
+}
 ```
 
-You can add your own flag situations — just add an entry with `"trigger": "flag"` to your persona's config.
+**User sentiment detection** — Claude detects the user's mood from their message:
+
+```json
+{
+  "name": "user-angry",
+  "trigger": "flag",
+  "description": "User is frustrated, angry, or unhappy with the result",
+  "sounds": ["sorry.wav", "ill-fix-it.wav"]
+}
+```
+
+```json
+{
+  "name": "user-grateful",
+  "trigger": "flag",
+  "description": "User is expressing gratitude, praise, or satisfaction",
+  "sounds": ["thanks.wav", "glad-to-help.wav"]
+}
+```
+
+For project installs, `claude-persona init --project` writes a `PERSONA_FLAGS.md` file and references it from your `CLAUDE.md`. This file tells Claude which flags to use and when. The `description` field from each flag situation becomes the instruction Claude sees.
+
+You can add any custom flag situations you can think of — just add an entry with `"trigger": "flag"` and a clear `description`. Some ideas:
+
+```json
+{"name": "user-confused", "trigger": "flag", "description": "User seems confused or is asking for clarification", "sounds": ["hmm.wav"]}
+{"name": "user-excited",  "trigger": "flag", "description": "User is excited or enthusiastic about something", "sounds": ["woohoo.wav"]}
+{"name": "big-refactor",  "trigger": "flag", "description": "Claude is about to perform a large-scale refactoring", "sounds": ["epic.wav"]}
+{"name": "tests-passing", "trigger": "flag", "description": "All tests are passing after a fix", "sounds": ["victory.wav"]}
+```
 
 ## CLI Commands
 
@@ -112,14 +147,28 @@ claude-persona init --global               # Install globally
 claude-persona init --project              # Install for current project
 claude-persona init --project --persona X  # Skip picker, install persona X
 claude-persona use                         # Switch active persona (interactive)
-claude-persona use <name>                  # Switch to a specific persona
-claude-persona add ./path/to/persona       # Install persona from local directory
-claude-persona add github:user/repo        # Install persona from GitHub
+claude-persona use <name>                  # Switch to a persona (auto-installs if bundled)
+claude-persona add <source>               # Install a persona (alias: install)
+claude-persona install <source>           # Same as add
 claude-persona test                        # List all situations
 claude-persona test task-complete          # Play a random sound for "task-complete"
 claude-persona uninstall --global          # Remove global hooks
 claude-persona uninstall --project         # Remove project hooks
 claude-persona uninstall --project --purge # Full removal (hooks + sounds + config)
+```
+
+### Sources for `add` / `install`
+
+```bash
+# Bundled persona by name
+npx claude-persona add peasant
+npx claude-persona install arthas
+
+# Local directory
+npx claude-persona add ./my-persona/
+
+# GitHub repo
+npx claude-persona add github:username/my-persona
 ```
 
 ## Managing Personas
@@ -129,20 +178,21 @@ claude-persona uninstall --project --purge # Full removal (hooks + sounds + conf
 After installation, switch between installed personas:
 
 ```bash
-# Interactive picker
+# Interactive picker (shows installed + available bundled personas)
 npx claude-persona use
 
-# Or specify directly
-npx claude-persona use peasant
+# Or specify directly (auto-installs from bundled if not yet installed)
+npx claude-persona use arthas
 ```
 
 This updates the active persona, re-registers hooks, and updates CLAUDE.md flags.
 
-### Installing third-party personas
-
-Install a persona from a local directory or GitHub:
+### Installing additional personas
 
 ```bash
+# Install a bundled persona
+npx claude-persona add peasant
+
 # From a local path
 npx claude-persona add ./my-persona/
 
@@ -164,7 +214,7 @@ npx claude-persona uninstall --global
 npx claude-persona uninstall --project
 ```
 
-This removes all hooks from your Claude settings and cleans up the `## Persona Flags` section from CLAUDE.md. Your sounds and config are kept in case you want to re-install later.
+This removes all hooks from your Claude settings and cleans up CLAUDE.md. Your sounds and config are kept in case you want to re-install later.
 
 To remove everything (hooks, sounds, config):
 
@@ -184,7 +234,9 @@ All commands are idempotent — safe to run multiple times.
    └── sounds/
        ├── hello.wav
        ├── done.mp3
-       └── error.wav
+       ├── error.wav
+       ├── calm-down.wav
+       └── youre-welcome.wav
    ```
 
 2. Write `persona.json`:
@@ -204,6 +256,18 @@ All commands are idempotent — safe to run multiple times.
          "trigger": "PostToolUseFailure",
          "description": "Something went wrong",
          "sounds": ["error.wav"]
+       },
+       {
+         "name": "user-angry",
+         "trigger": "flag",
+         "description": "User is frustrated, angry, or unhappy with the result",
+         "sounds": ["calm-down.wav"]
+       },
+       {
+         "name": "user-grateful",
+         "trigger": "flag",
+         "description": "User is expressing gratitude, praise, or satisfaction",
+         "sounds": ["youre-welcome.wav"]
        }
      ]
    }

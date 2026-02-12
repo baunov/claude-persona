@@ -74,6 +74,22 @@
       "sounds": ["we-caught-a-witch.wav"]
     },
     {
+      "name": "user-angry",
+      "trigger": "flag",
+      "description": "User is frustrated, angry, or unhappy with the result",
+      "sounds": [
+        "dont-you-feel-sorry.wav",
+        "theyll-kill-me.wav",
+        "im-being-pressured.wav"
+      ]
+    },
+    {
+      "name": "user-grateful",
+      "trigger": "flag",
+      "description": "User is expressing gratitude, praise, or satisfaction",
+      "sounds": ["yes-milord.wav", "alright.wav", "im-ready.wav"]
+    },
+    {
       "name": "spam-detected",
       "trigger": "spam",
       "description": "User sending too many prompts too fast",
