@@ -157,36 +157,74 @@ export function registerHooks(
   console.log(`  Hooks: registered in ${settingsPath}`);
 }
 
-/** The reference line we add to CLAUDE.md to import our standalone flags file */
-const CLAUDE_MD_REFERENCE = '@.claude/persona/PERSONA_FLAGS.md';
+/** The reference lines we add to CLAUDE.md to import our standalone persona files */
+const PERSONA_MD_REFERENCE = '@.claude/persona/PERSONA.md';
+const FLAGS_MD_REFERENCE = '@.claude/persona/PERSONA_FLAGS.md';
+
+// Keep the old reference string so we can clean it up from existing installs
+const LEGACY_FLAGS_REFERENCE = '@.claude/persona/PERSONA_FLAGS.md';
 
 /**
- * Write persona flag instructions to a standalone file and reference it from CLAUDE.md.
+ * Write persona instructions to standalone files and reference them from CLAUDE.md.
  *
- * Instead of inlining a section in CLAUDE.md (fragile, hard to distinguish from user content),
- * we write `.claude/persona/PERSONA_FLAGS.md` and add a single `@import` reference line.
+ * Generates up to two files:
+ * - PERSONA.md — personality, speaking style, and per-situation speeches
+ * - PERSONA_FLAGS.md — flag detection instructions table
+ *
+ * Each is referenced from CLAUDE.md via `@import`.
  */
 export function updateClaudeMdFlags(config: PersonaConfig): void {
   const targetDir = path.join(process.cwd(), '.claude', 'persona');
+  const personaFilePath = path.join(targetDir, 'PERSONA.md');
   const flagsFilePath = path.join(targetDir, 'PERSONA_FLAGS.md');
   const claudeMdPath = path.join(process.cwd(), 'CLAUDE.md');
-  const flagSituations = config.situations.filter((s) => s.trigger === 'flag');
 
-  if (flagSituations.length === 0) {
-    // No flags — remove the standalone file and the reference
-    removeClaudeMdReference(claudeMdPath);
-    if (fs.existsSync(flagsFilePath)) {
-      fs.unlinkSync(flagsFilePath);
+  const flagSituations = config.situations.filter((s) => s.trigger === 'flag');
+  const situationsWithSpeech = config.situations.filter(
+    (s) => s.speech && s.speech.length > 0,
+  );
+  const hasPersonality = !!config.personality;
+  const hasSpeech = situationsWithSpeech.length > 0;
+  const hasFlags = flagSituations.length > 0;
+  const hasPersonaContent = hasPersonality || hasSpeech;
+
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  // ── PERSONA.md ──
+  if (hasPersonaContent) {
+    let content = `# Persona: ${config.name}\n\n`;
+
+    if (hasPersonality) {
+      content += `## Speaking Style\n\n${config.personality}\n\n`;
     }
-    return;
+
+    if (hasSpeech) {
+      content += `## Situational Speeches\n\n`;
+      content += `When a situation below occurs, optionally weave one of the short in-character lines into your response. Pick one at random — don't repeat the same line back-to-back. These are flavor, not mandatory; skip if it would feel forced.\n\n`;
+
+      for (const sit of situationsWithSpeech) {
+        const lines = sit.speech!.map((l) => `- "${l}"`).join('\n');
+        content += `### ${sit.name}\n_${sit.description}_\n${lines}\n\n`;
+      }
+    }
+
+    fs.writeFileSync(personaFilePath, content);
+    addClaudeMdReference(claudeMdPath, PERSONA_MD_REFERENCE);
+    console.log('  Persona instructions: written to PERSONA.md');
+  } else {
+    removeClaudeMdReference(claudeMdPath, PERSONA_MD_REFERENCE);
+    if (fs.existsSync(personaFilePath)) {
+      fs.unlinkSync(personaFilePath);
+    }
   }
 
-  // Write the standalone flags file
-  const rows = flagSituations
-    .map((s) => `| \`<!-- persona:${s.name} -->\` | ${s.description} |`)
-    .join('\n');
+  // ── PERSONA_FLAGS.md ──
+  if (hasFlags) {
+    const rows = flagSituations
+      .map((s) => `| \`<!-- persona:${s.name} -->\` | ${s.description} |`)
+      .join('\n');
 
-  const flagsContent = `# Persona Flags
+    const flagsContent = `# Persona Flags
 
 When a situation below applies, include the corresponding HTML comment flag **at the very end** of your text output. The hook system will detect it and play the appropriate sound.
 
@@ -203,43 +241,57 @@ Rules:
 - The flag is invisible to markdown renderers but the hook script reads it from the transcript
 `;
 
-  fs.mkdirSync(targetDir, { recursive: true });
-  fs.writeFileSync(flagsFilePath, flagsContent);
-
-  // Add reference to CLAUDE.md if not already present
-  addClaudeMdReference(claudeMdPath);
-
-  console.log('  Persona flags: written to PERSONA_FLAGS.md');
+    fs.writeFileSync(flagsFilePath, flagsContent);
+    addClaudeMdReference(claudeMdPath, FLAGS_MD_REFERENCE);
+    console.log('  Persona flags: written to PERSONA_FLAGS.md');
+  } else {
+    removeClaudeMdReference(claudeMdPath, FLAGS_MD_REFERENCE);
+    if (fs.existsSync(flagsFilePath)) {
+      fs.unlinkSync(flagsFilePath);
+    }
+  }
 }
 
-/** Add the @import reference line to CLAUDE.md */
-function addClaudeMdReference(claudeMdPath: string): void {
+/** Add an @import reference line to CLAUDE.md */
+function addClaudeMdReference(claudeMdPath: string, reference: string): void {
   let content = '';
   if (fs.existsSync(claudeMdPath)) {
     content = fs.readFileSync(claudeMdPath, 'utf8');
   }
 
   // Already present — nothing to do
-  if (content.includes(CLAUDE_MD_REFERENCE)) return;
+  if (content.includes(reference)) return;
 
   // Append reference line
-  const line = `\n${CLAUDE_MD_REFERENCE}\n`;
+  const line = `\n${reference}\n`;
   content = content ? content.trimEnd() + '\n' + line : line.trimStart();
   fs.writeFileSync(claudeMdPath, content);
 }
 
-/** Remove the @import reference line from CLAUDE.md */
-export function removeClaudeMdReference(claudeMdPath: string): void {
+/** Remove an @import reference line from CLAUDE.md */
+export function removeClaudeMdReference(claudeMdPath: string, reference?: string): void {
   if (!fs.existsSync(claudeMdPath)) return;
 
   let content = fs.readFileSync(claudeMdPath, 'utf8');
-  if (!content.includes(CLAUDE_MD_REFERENCE)) return;
 
-  // Remove the reference line (and surrounding blank lines it may leave)
-  content = content
-    .split('\n')
-    .filter((line) => line.trim() !== CLAUDE_MD_REFERENCE)
-    .join('\n');
+  // If a specific reference is given, remove just that one.
+  // Otherwise remove all persona references (used by uninstall).
+  const refs = reference
+    ? [reference]
+    : [PERSONA_MD_REFERENCE, FLAGS_MD_REFERENCE, LEGACY_FLAGS_REFERENCE];
+
+  let changed = false;
+  for (const ref of refs) {
+    if (content.includes(ref)) {
+      content = content
+        .split('\n')
+        .filter((line) => line.trim() !== ref)
+        .join('\n');
+      changed = true;
+    }
+  }
+
+  if (!changed) return;
 
   // Clean up multiple consecutive blank lines
   content = content.replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';

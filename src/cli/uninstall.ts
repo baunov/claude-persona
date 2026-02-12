@@ -105,12 +105,18 @@ function removeHooks(settingsPath: string): void {
 
 function removePersonaFlags(): void {
   const claudeMdPath = path.join(process.cwd(), 'CLAUDE.md');
-  const flagsFilePath = path.join(process.cwd(), '.claude', 'persona', 'PERSONA_FLAGS.md');
+  const personaDir = path.join(process.cwd(), '.claude', 'persona');
+  const personaFilePath = path.join(personaDir, 'PERSONA.md');
+  const flagsFilePath = path.join(personaDir, 'PERSONA_FLAGS.md');
 
-  // Remove the @import reference from CLAUDE.md
+  // Remove all @import references from CLAUDE.md
   removeClaudeMdReference(claudeMdPath);
 
-  // Remove the standalone flags file
+  // Remove the standalone files
+  if (fs.existsSync(personaFilePath)) {
+    fs.unlinkSync(personaFilePath);
+    console.log('  Removed PERSONA.md');
+  }
   if (fs.existsSync(flagsFilePath)) {
     fs.unlinkSync(flagsFilePath);
     console.log('  Removed PERSONA_FLAGS.md');

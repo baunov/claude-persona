@@ -31,6 +31,8 @@ export interface Situation {
   description: string;
   /** Sound filenames (resolved relative to persona sounds/ dir) */
   sounds: string[];
+  /** Optional short in-character lines Claude can sprinkle into responses for this situation */
+  speech?: string[];
 }
 
 /** The persona.json file inside a persona directory */
@@ -39,6 +41,8 @@ export interface PersonaConfig {
   name: string;
   /** Human-readable description */
   description: string;
+  /** Personality and speaking style instructions for Claude */
+  personality?: string;
   /** All configured situations */
   situations: Situation[];
 }
