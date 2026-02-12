@@ -41,6 +41,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/claude-persona"
+    "url": "git+https://github.com/baunov/claude-persona.git"
   }
 }
