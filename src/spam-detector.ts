@@ -3,8 +3,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 const STAMP_FILE = path.join(os.tmpdir(), 'claude-persona-stamps.json');
-const SPAM_WINDOW_MS = 15_000;
-const SPAM_THRESHOLD = 3;
+export const DEFAULT_SPAM_WINDOW_MS = 10_000;
+export const DEFAULT_SPAM_THRESHOLD = 5;
 
 function getTimestamps(): number[] {
   try {
@@ -23,12 +23,15 @@ function saveTimestamps(stamps: number[]): void {
 
 /**
  * Record a prompt timestamp and check if the user is spamming.
- * Returns true if 3+ prompts were submitted within 15 seconds.
+ * Returns true if threshold+ prompts were submitted within the window.
  */
-export function checkSpam(): boolean {
+export function checkSpam(
+  threshold = DEFAULT_SPAM_THRESHOLD,
+  windowMs = DEFAULT_SPAM_WINDOW_MS,
+): boolean {
   const now = Date.now();
-  const stamps = getTimestamps().filter((t) => now - t < SPAM_WINDOW_MS);
+  const stamps = getTimestamps().filter((t) => now - t < windowMs);
   stamps.push(now);
   saveTimestamps(stamps);
-  return stamps.length >= SPAM_THRESHOLD;
+  return stamps.length >= threshold;
 }

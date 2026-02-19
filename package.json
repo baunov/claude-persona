@@ -1,6 +1,6 @@
 {
   "name": "claude-persona",
-  "version": "0.3.0",
+  "version": "0.3.5",
   "description": "Sound effects for Claude Code sessions — configurable audio feedback for hooks and events",
   "license": "MIT",
   "type": "module",
@@ -18,6 +18,8 @@
     "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "vitest run tests/e2e/",
+    "test:e2e:live": "CLAUDE_E2E=1 vitest run tests/e2e/claude-live.test.ts",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {

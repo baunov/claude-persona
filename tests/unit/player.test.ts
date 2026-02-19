@@ -22,7 +22,7 @@ vi.mock('node:fs', async (importOriginal) => {
 });
 
 import fs from 'node:fs';
-import { randomElement, play, playRandom } from '../../src/player.js';
+import { randomElement, play, playRandom, buildVolumeOpts } from '../../src/player.js';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -88,5 +88,59 @@ describe('playRandom', () => {
 
     await playRandom(['/a.mp3', '/b.mp3']);
     expect(mockPlay).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('buildVolumeOpts', () => {
+  it('returns empty object for undefined volume', () => {
+    expect(buildVolumeOpts(undefined)).toEqual({});
+  });
+
+  it('returns empty object for volume 1.0', () => {
+    expect(buildVolumeOpts(1.0)).toEqual({});
+  });
+
+  it('returns player-specific args for volume 0.6', () => {
+    const opts = buildVolumeOpts(0.6);
+    expect(opts.afplay).toEqual(['-v', '0.6']);
+    expect(opts.mpg123).toEqual(['-f', '19661']);
+    expect(opts.mpg321).toEqual(['-f', '19661']);
+    expect(opts.play).toEqual(['-v', '0.6']);
+    expect(opts.mplayer).toEqual(['-volume', '60']);
+  });
+});
+
+describe('play with volume', () => {
+  it('passes volume opts to player.play when volume < 1.0', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    mockPlay.mockImplementation((...args: unknown[]) => {
+      const cb = args[args.length - 1] as (err: null) => void;
+      cb(null);
+    });
+
+    await play('/some/file.mp3', 0.6);
+    expect(mockPlay).toHaveBeenCalledTimes(1);
+
+    const callArgs = mockPlay.mock.calls[0];
+    expect(callArgs[0]).toBe('/some/file.mp3');
+    // Second arg should be the volume opts object
+    expect(callArgs[1]).toHaveProperty('afplay');
+    expect(callArgs[1].afplay).toEqual(['-v', '0.6']);
+  });
+
+  it('does not pass volume opts when volume is 1.0', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    mockPlay.mockImplementation((_path: string, cb: (err: null) => void) => cb(null));
+
+    await play('/some/file.mp3', 1.0);
+    expect(mockPlay).toHaveBeenCalledWith('/some/file.mp3', expect.any(Function));
+  });
+
+  it('does not pass volume opts when volume is undefined', async () => {
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    mockPlay.mockImplementation((_path: string, cb: (err: null) => void) => cb(null));
+
+    await play('/some/file.mp3');
+    expect(mockPlay).toHaveBeenCalledWith('/some/file.mp3', expect.any(Function));
   });
 });

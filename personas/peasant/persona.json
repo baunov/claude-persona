@@ -10,10 +10,7 @@
       "sounds": [
         "yes-milord.wav",
         "uh-huh.wav",
-        "alright.wav",
-        "well-im-off.wav",
-        "work-again.wav",
-        "what.wav"
+        "alright.wav"
       ],
       "speech": [
         "Yes, milord.",
@@ -28,7 +25,7 @@
       "name": "task-complete",
       "trigger": "Stop",
       "description": "Claude finished responding",
-      "sounds": ["done.mp3", "im-ready.wav", "yes.wav", "alright.wav"],
+      "sounds": ["done.mp3", "im-ready.wav"],
       "speech": [
         "Job's done.",
         "Done. What's next?",
@@ -43,7 +40,6 @@
       "sounds": [
         "theyll-kill-me.wav",
         "ooh.wav",
-        "have-to-fight.wav",
         "cant-build-here.m4a"
       ],
       "speech": [
@@ -57,7 +53,7 @@
       "name": "session-start",
       "trigger": "SessionStart",
       "description": "New session begins",
-      "sounds": ["work-again.wav", "im-ready.wav", "yes-milord.wav"],
+      "sounds": ["work-again.wav", "im-ready.wav"],
       "speech": [
         "Reporting for duty.",
         "Ready to work.",
@@ -74,7 +70,7 @@
       "name": "notification",
       "trigger": "Notification",
       "description": "Claude needs attention or permission",
-      "sounds": ["im-being-pressured.wav", "what.wav"],
+      "sounds": ["what.wav"],
       "speech": [
         "Need your say-so on this one, milord.",
         "I need orders."
@@ -121,7 +117,7 @@
       "name": "plan-complete",
       "trigger": "flag",
       "description": "Claude has finished presenting an implementation plan and is awaiting user approval",
-      "sounds": ["im-ready.wav", "done.mp3"],
+      "sounds": ["done.mp3"],
       "speech": [
         "That's the plan, milord. Your call.",
         "All drawn up. Just give the word."
@@ -157,7 +153,14 @@
       "name": "spam-detected",
       "trigger": "spam",
       "description": "User sending too many prompts too fast",
-      "sounds": ["are-you-the-king.wav", "im-being-pressured.wav", "wish-it-were-you.wav"]
+      "sounds": ["im-being-pressured.wav", "wish-it-were-you.wav"]
+    },
+    {
+      "name": "permission-nag",
+      "trigger": "permission_timeout",
+      "description": "Escalating reminders when a permission request goes unanswered",
+      "sounds": ["are-you-the-king.wav"],
+      "timeouts": [480]
     }
   ]
 }

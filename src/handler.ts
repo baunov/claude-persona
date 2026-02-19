@@ -9,6 +9,7 @@
  * Reads hook JSON from stdin, resolves the active persona, plays a sound.
  */
 
+import fs from 'node:fs';
 import path from 'node:path';
 import {
   loadActiveConfig,
@@ -19,14 +20,28 @@ import {
   getSituationByName,
   getFlagNames,
   hasSpamSituation,
+  hasPermissionTimeoutSituation,
 } from './config.js';
-import { playRandom, randomElement } from './player.js';
+import { play, randomElement } from './player.js';
 import { checkSpam } from './spam-detector.js';
 import { scanForFlags } from './flag-scanner.js';
+import { startNagger, cancelNagger } from './nagger.js';
+import { detectVolumeAsync } from './focus.js';
 import type { HookInput, Situation } from './types.js';
 
 // Safety timeout — never block Claude
 setTimeout(() => process.exit(0), 5000);
+
+/** Append a JSONL log entry when CLAUDE_PERSONA_LOG is set (for e2e testing / debugging) */
+function logEntry(entry: Record<string, unknown>): void {
+  const logPath = process.env.CLAUDE_PERSONA_LOG;
+  if (!logPath) return;
+  try {
+    fs.appendFileSync(logPath, JSON.stringify({ ts: Date.now(), ...entry }) + '\n');
+  } catch {
+    // Never block Claude
+  }
+}
 
 function parseArgs(argv: string[]): { event: string; flags: boolean; config: string } {
   let event = '';
@@ -66,6 +81,9 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  // Start volume detection early — runs concurrently with stdin/config loading
+  const volumePromise = detectVolumeAsync();
+
   let hookInput: HookInput;
   try {
     const raw = await readStdin();
@@ -86,21 +104,26 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  // Await volume detection (started concurrently above)
+  const volume = await volumePromise;
+
   // Flag scanning mode (async Stop hook)
   if (args.flags) {
     const flagNames = getFlagNames(personaConfig);
-    if (flagNames.length === 0 || !hookInput.transcript_path) {
+    if (flagNames.length === 0 || (!hookInput.last_assistant_message && !hookInput.transcript_path)) {
       process.exit(0);
     }
 
-    const matchedFlag = scanForFlags(hookInput.transcript_path, flagNames);
+    const matchedFlag = scanForFlags(flagNames, hookInput.last_assistant_message, hookInput.transcript_path);
     if (matchedFlag) {
       const situation = getSituationByName(personaConfig, matchedFlag);
-      if (situation) {
+      if (situation && situation.sounds.length > 0) {
         const soundPaths = situation.sounds.map((s) =>
           resolveSoundPath(personaDir, s),
         );
-        await playRandom(soundPaths);
+        const chosen = randomElement(soundPaths);
+        logEntry({ event: args.event, flag: matchedFlag, situation: situation.name, sound: path.basename(chosen), mode: 'flag' });
+        await play(chosen, volume);
       }
     }
 
@@ -108,20 +131,41 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  // Permission timeout nagger: start on Notification, cancel on response/session end
+  const sessionId = hookInput.session_id || 'unknown';
+  if (hasPermissionTimeoutSituation(personaConfig)) {
+    if (args.event === 'Notification') {
+      const nagSituations = getSituationsForTrigger(personaConfig, 'permission_timeout');
+      const nagCfg = nagSituations[0];
+      if (nagCfg) {
+        const nagSounds = nagCfg.sounds.map((s) => resolveSoundPath(personaDir, s));
+        const timeouts = nagCfg.timeouts ?? [30, 60, 120];
+        startNagger(sessionId, nagSounds, timeouts);
+        logEntry({ event: args.event, nagger: 'started', mode: 'nagger' });
+      }
+    } else if (args.event === 'UserPromptSubmit' || args.event === 'SessionEnd') {
+      cancelNagger(sessionId);
+      logEntry({ event: args.event, nagger: 'cancelled', mode: 'nagger' });
+    }
+  }
+
   // Normal mode: resolve situation from event
   let situation: Situation | undefined;
+  let mode = 'normal';
 
   if (args.event === 'UserPromptSubmit' && hasSpamSituation(personaConfig)) {
-    const isSpam = checkSpam();
+    const spamSituations = getSituationsForTrigger(personaConfig, 'spam');
+    const spamCfg = spamSituations[0];
+    const isSpam = checkSpam(spamCfg?.spamThreshold, spamCfg?.spamWindowMs);
     if (isSpam) {
-      const spamSituations = getSituationsForTrigger(personaConfig, 'spam');
       situation = spamSituations.length > 0 ? randomElement(spamSituations) : undefined;
+      mode = 'spam';
     }
   }
 
   if (!situation) {
     const matches = getSituationsForTrigger(personaConfig, args.event as any);
-    situation = matches.length > 0 ? matches[0] : undefined;
+    situation = matches.length > 0 ? randomElement(matches) : undefined;
   }
 
   if (!situation || situation.sounds.length === 0) {
@@ -131,8 +175,9 @@ async function main(): Promise<void> {
   const soundPaths = situation.sounds.map((s) =>
     resolveSoundPath(personaDir, s),
   );
-
-  await playRandom(soundPaths);
+  const chosen = randomElement(soundPaths);
+  logEntry({ event: args.event, situation: situation.name, sound: path.basename(chosen), mode });
+  await play(chosen, volume);
   process.exit(0);
 }
 

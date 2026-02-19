@@ -14,6 +14,7 @@ import {
   getRequiredHookEvents,
   hasFlagSituations,
   hasSpamSituation,
+  hasPermissionTimeoutSituation,
   getFlagNames,
 } from '../../src/config.js';
 import { createTempDir, cleanupTempDir, createTestPersona, createFullPersona } from '../helpers/fs-helpers.js';
@@ -271,6 +272,21 @@ describe('getRequiredHookEvents', () => {
     expect(events).not.toContain('spam');
   });
 
+  it('maps permission_timeout to Notification, UserPromptSubmit, and SessionEnd', () => {
+    const personaDir = createTestPersona(tmpDir, 'nag-only', {
+      situations: [
+        { name: 'nag', trigger: 'permission_timeout', description: 'Nag', sounds: ['n.mp3'] },
+      ],
+    });
+    const config = loadPersonaConfig(path.join(tmpDir, 'nag-only'));
+
+    const events = getRequiredHookEvents(config);
+    expect(events).toContain('Notification');
+    expect(events).toContain('UserPromptSubmit');
+    expect(events).toContain('SessionEnd');
+    expect(events).not.toContain('permission_timeout');
+  });
+
   it('deduplicates events', () => {
     const personaDir = createFullPersona(tmpDir);
     const config = loadPersonaConfig(personaDir);
@@ -306,6 +322,24 @@ describe('hasSpamSituation', () => {
     const personaDir = createTestPersona(tmpDir, 'no-spam');
     const config = loadPersonaConfig(path.join(tmpDir, 'no-spam'));
     expect(hasSpamSituation(config)).toBe(false);
+  });
+});
+
+describe('hasPermissionTimeoutSituation', () => {
+  it('returns true when permission_timeout situation exists', () => {
+    const personaDir = createTestPersona(tmpDir, 'with-nag', {
+      situations: [
+        { name: 'nag', trigger: 'permission_timeout', description: 'Nag', sounds: ['n.mp3'] },
+      ],
+    });
+    const config = loadPersonaConfig(path.join(tmpDir, 'with-nag'));
+    expect(hasPermissionTimeoutSituation(config)).toBe(true);
+  });
+
+  it('returns false when no permission_timeout situation', () => {
+    const personaDir = createTestPersona(tmpDir, 'no-nag');
+    const config = loadPersonaConfig(path.join(tmpDir, 'no-nag'));
+    expect(hasPermissionTimeoutSituation(config)).toBe(false);
   });
 });
 

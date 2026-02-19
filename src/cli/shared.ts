@@ -157,12 +157,25 @@ export function registerHooks(
   console.log(`  Hooks: registered in ${settingsPath}`);
 }
 
-/** The reference lines we add to CLAUDE.md to import our standalone persona files */
+/** Reference lines for project-mode CLAUDE.md @imports */
 const PERSONA_MD_REFERENCE = '@.claude/persona/PERSONA.md';
 const FLAGS_MD_REFERENCE = '@.claude/persona/PERSONA_FLAGS.md';
 
+/** Reference lines for global-mode CLAUDE.md @imports (absolute home path) */
+const GLOBAL_PERSONA_MD_REFERENCE = '@~/.claude-persona/PERSONA.md';
+const GLOBAL_FLAGS_MD_REFERENCE = '@~/.claude-persona/PERSONA_FLAGS.md';
+
 // Keep the old reference string so we can clean it up from existing installs
 const LEGACY_FLAGS_REFERENCE = '@.claude/persona/PERSONA_FLAGS.md';
+
+/** All persona-related references (for cleanup during uninstall) */
+export const ALL_PERSONA_REFERENCES = [
+  PERSONA_MD_REFERENCE,
+  FLAGS_MD_REFERENCE,
+  GLOBAL_PERSONA_MD_REFERENCE,
+  GLOBAL_FLAGS_MD_REFERENCE,
+  LEGACY_FLAGS_REFERENCE,
+];
 
 /**
  * Write persona instructions to standalone files and reference them from CLAUDE.md.
@@ -171,13 +184,29 @@ const LEGACY_FLAGS_REFERENCE = '@.claude/persona/PERSONA_FLAGS.md';
  * - PERSONA.md — personality, speaking style, and per-situation speeches
  * - PERSONA_FLAGS.md — flag detection instructions table
  *
- * Each is referenced from CLAUDE.md via `@import`.
+ * For project mode: writes to .claude/persona/, references from ./CLAUDE.md
+ * For global mode: writes to ~/.claude-persona/, references from ~/.claude/CLAUDE.md
  */
-export function updateClaudeMdFlags(config: PersonaConfig): void {
-  const targetDir = path.join(process.cwd(), '.claude', 'persona');
+export function updateClaudeMdFlags(config: PersonaConfig, mode: 'global' | 'project'): void {
+  let targetDir: string;
+  let claudeMdPath: string;
+  let personaMdRef: string;
+  let flagsMdRef: string;
+
+  if (mode === 'global') {
+    targetDir = path.join(os.homedir(), '.claude-persona');
+    claudeMdPath = path.join(os.homedir(), '.claude', 'CLAUDE.md');
+    personaMdRef = GLOBAL_PERSONA_MD_REFERENCE;
+    flagsMdRef = GLOBAL_FLAGS_MD_REFERENCE;
+  } else {
+    targetDir = path.join(process.cwd(), '.claude', 'persona');
+    claudeMdPath = path.join(process.cwd(), 'CLAUDE.md');
+    personaMdRef = PERSONA_MD_REFERENCE;
+    flagsMdRef = FLAGS_MD_REFERENCE;
+  }
+
   const personaFilePath = path.join(targetDir, 'PERSONA.md');
   const flagsFilePath = path.join(targetDir, 'PERSONA_FLAGS.md');
-  const claudeMdPath = path.join(process.cwd(), 'CLAUDE.md');
 
   const flagSituations = config.situations.filter((s) => s.trigger === 'flag');
   const situationsWithSpeech = config.situations.filter(
@@ -209,10 +238,10 @@ export function updateClaudeMdFlags(config: PersonaConfig): void {
     }
 
     fs.writeFileSync(personaFilePath, content);
-    addClaudeMdReference(claudeMdPath, PERSONA_MD_REFERENCE);
+    addClaudeMdReference(claudeMdPath, personaMdRef);
     console.log('  Persona instructions: written to PERSONA.md');
   } else {
-    removeClaudeMdReference(claudeMdPath, PERSONA_MD_REFERENCE);
+    removeClaudeMdReference(claudeMdPath, personaMdRef);
     if (fs.existsSync(personaFilePath)) {
       fs.unlinkSync(personaFilePath);
     }
@@ -242,10 +271,10 @@ Rules:
 `;
 
     fs.writeFileSync(flagsFilePath, flagsContent);
-    addClaudeMdReference(claudeMdPath, FLAGS_MD_REFERENCE);
+    addClaudeMdReference(claudeMdPath, flagsMdRef);
     console.log('  Persona flags: written to PERSONA_FLAGS.md');
   } else {
-    removeClaudeMdReference(claudeMdPath, FLAGS_MD_REFERENCE);
+    removeClaudeMdReference(claudeMdPath, flagsMdRef);
     if (fs.existsSync(flagsFilePath)) {
       fs.unlinkSync(flagsFilePath);
     }
@@ -278,7 +307,7 @@ export function removeClaudeMdReference(claudeMdPath: string, reference?: string
   // Otherwise remove all persona references (used by uninstall).
   const refs = reference
     ? [reference]
-    : [PERSONA_MD_REFERENCE, FLAGS_MD_REFERENCE, LEGACY_FLAGS_REFERENCE];
+    : ALL_PERSONA_REFERENCES;
 
   let changed = false;
   for (const ref of refs) {
@@ -316,8 +345,5 @@ export function activatePersona(
 
   writeActiveConfig(activeConfigPath, personaName);
   registerHooks(personaConfig, settingsPath, handlerPath, activeConfigPath);
-
-  if (mode === 'project') {
-    updateClaudeMdFlags(personaConfig);
-  }
+  updateClaudeMdFlags(personaConfig, mode);
 }

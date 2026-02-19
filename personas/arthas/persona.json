@@ -108,7 +108,8 @@
       "sounds": [
         "now-i-truly.m4a",
         "i-was-just.m4a",
-        "pathetic-fool.m4a"
+        "pathetic-fool.m4a",
+        "being-a-prince-isnt.m4a"
       ],
       "speech": [
         "I see my error now. The Light teaches humility.",
@@ -164,7 +165,7 @@
       "sounds": [
         "the-light-empowers.m4a",
         "i-serve-the-light.m4a",
-        "excellent-plan.m4a"
+        "no-need-to-bow.m4a"
       ],
       "speech": [
         "No need to bow. I serve the Light — and you.",
@@ -180,6 +181,17 @@
         "no-need-to-bow-harsh.m4a",
         "i-know-what-im-doing.m4a"
       ]
+    },
+    {
+      "name": "permission-nag",
+      "trigger": "permission_timeout",
+      "description": "Escalating reminders when a permission request goes unanswered",
+      "sounds": [
+        "no-need-to-bow.m4a",
+        "where-is-the-enemy.m4a",
+        "no-need-to-bow-harsh.m4a"
+      ],
+      "timeouts": [30, 60, 120]
     }
   ]
 }

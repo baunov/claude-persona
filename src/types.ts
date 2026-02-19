@@ -16,7 +16,7 @@ export type HookEvent =
   | 'PermissionRequest';
 
 /** Special trigger types beyond hook events */
-export type SpecialTrigger = 'flag' | 'spam';
+export type SpecialTrigger = 'flag' | 'spam' | 'permission_timeout';
 
 /** All valid trigger values */
 export type TriggerType = HookEvent | SpecialTrigger;
@@ -33,6 +33,12 @@ export interface Situation {
   sounds: string[];
   /** Optional short in-character lines Claude can sprinkle into responses for this situation */
   speech?: string[];
+  /** Optional spam threshold override (number of prompts) */
+  spamThreshold?: number;
+  /** Optional spam window override (milliseconds) */
+  spamWindowMs?: number;
+  /** Timeout intervals in seconds for permission_timeout situations (e.g. [30, 60, 120]) */
+  timeouts?: number[];
 }
 
 /** The persona.json file inside a persona directory */
@@ -76,6 +82,7 @@ export interface HookInput {
   model?: string;
   // Stop
   stop_hook_active?: boolean;
+  last_assistant_message?: string;
 }
 
 /** Structure of Claude Code settings.json hooks section */

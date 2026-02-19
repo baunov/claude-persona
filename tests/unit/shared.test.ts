@@ -238,7 +238,7 @@ describe('updateClaudeMdFlags', () => {
 
     const personaDir = createFullPersona(tmpDir);
     const config = loadPersonaConfig(personaDir);
-    updateClaudeMdFlags(config);
+    updateClaudeMdFlags(config, 'project');
 
     // Check standalone file
     const flagsPath = path.join(configDir, 'PERSONA_FLAGS.md');
@@ -259,9 +259,9 @@ describe('updateClaudeMdFlags', () => {
 
     const personaDir = createFullPersona(tmpDir);
     const config = loadPersonaConfig(personaDir);
-    updateClaudeMdFlags(config);
-    updateClaudeMdFlags(config);
-    updateClaudeMdFlags(config);
+    updateClaudeMdFlags(config, 'project');
+    updateClaudeMdFlags(config, 'project');
+    updateClaudeMdFlags(config, 'project');
 
     const claudeMd = fs.readFileSync(path.join(tmpDir, 'CLAUDE.md'), 'utf8');
     const matches = claudeMd.match(/@\.claude\/persona\/PERSONA_FLAGS\.md/g);
@@ -276,7 +276,7 @@ describe('updateClaudeMdFlags', () => {
 
     const personaDir = createFullPersona(tmpDir);
     const config = loadPersonaConfig(personaDir);
-    updateClaudeMdFlags(config);
+    updateClaudeMdFlags(config, 'project');
 
     const claudeMd = fs.readFileSync(path.join(tmpDir, 'CLAUDE.md'), 'utf8');
     expect(claudeMd).toContain('# My Project');
@@ -292,13 +292,13 @@ describe('updateClaudeMdFlags', () => {
     // First install with flags
     const fullDir = createFullPersona(tmpDir);
     const fullConfig = loadPersonaConfig(fullDir);
-    updateClaudeMdFlags(fullConfig);
+    updateClaudeMdFlags(fullConfig, 'project');
     expect(fs.existsSync(path.join(configDir, 'PERSONA_FLAGS.md'))).toBe(true);
 
     // Now switch to persona without flags
     const simpleDir = createTestPersona(path.join(tmpDir, 'personas'), 'simple');
     const simpleConfig = loadPersonaConfig(simpleDir);
-    updateClaudeMdFlags(simpleConfig);
+    updateClaudeMdFlags(simpleConfig, 'project');
 
     expect(fs.existsSync(path.join(configDir, 'PERSONA_FLAGS.md'))).toBe(false);
     const claudeMd = fs.readFileSync(path.join(tmpDir, 'CLAUDE.md'), 'utf8');

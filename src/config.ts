@@ -107,6 +107,10 @@ export function getRequiredHookEvents(config: PersonaConfig): string[] {
       events.add('Stop');
     } else if (situation.trigger === 'spam') {
       events.add('UserPromptSubmit');
+    } else if (situation.trigger === 'permission_timeout') {
+      events.add('Notification');
+      events.add('UserPromptSubmit');
+      events.add('SessionEnd');
     } else {
       events.add(situation.trigger);
     }
@@ -123,6 +127,11 @@ export function hasFlagSituations(config: PersonaConfig): boolean {
 /** Check whether the config has a spam-type situation */
 export function hasSpamSituation(config: PersonaConfig): boolean {
   return config.situations.some((s) => s.trigger === 'spam');
+}
+
+/** Check whether the config has a permission_timeout situation */
+export function hasPermissionTimeoutSituation(config: PersonaConfig): boolean {
+  return config.situations.some((s) => s.trigger === 'permission_timeout');
 }
 
 /** Get names of all flag-trigger situations */
