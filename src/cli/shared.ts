@@ -4,10 +4,13 @@ import os from 'node:os';
 import {
   loadPersonaConfig,
   resolvePersonaDir,
+  getSituationsForTrigger,
+  resolveSoundPath,
   getRequiredHookEvents,
   hasFlagSituations,
   writeActiveConfig,
 } from '../config.js';
+import { playRandom, randomElement } from '../player.js';
 import type { ClaudeSettings, ClaudeHookMatcher, PersonaConfig } from '../types.js';
 
 /** Locate the package root (where personas/ lives) */
@@ -336,12 +339,24 @@ export function removeClaudeMdReference(claudeMdPath: string, reference?: string
   }
 }
 
+/** Play the session-start sound for a persona */
+export async function playStartSound(configDir: string, personaName: string): Promise<void> {
+  const personaDir = resolvePersonaDir(configDir, personaName);
+  const personaConfig = loadPersonaConfig(personaDir);
+  const matches = getSituationsForTrigger(personaConfig, 'SessionStart');
+  if (matches.length === 0) return;
+
+  const situation = randomElement(matches);
+  const soundPaths = situation.sounds.map((s) => resolveSoundPath(personaDir, s));
+  await playRandom(soundPaths);
+}
+
 /** Activate a persona: update active.json, re-register hooks, update CLAUDE.md */
-export function activatePersona(
+export async function activatePersona(
   personaName: string,
   configDir: string,
   mode: 'global' | 'project',
-): void {
+): Promise<void> {
   const { settingsPath, activeConfigPath } = getTargetPaths(mode);
   const personaDir = resolvePersonaDir(configDir, personaName);
   const personaConfig = loadPersonaConfig(personaDir);
@@ -350,4 +365,5 @@ export function activatePersona(
   writeActiveConfig(activeConfigPath, personaName);
   registerHooks(personaConfig, settingsPath, handlerPath, activeConfigPath);
   updateClaudeMdFlags(personaConfig, mode);
+  await playStartSound(configDir, personaName);
 }

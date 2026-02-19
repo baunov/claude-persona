@@ -68,8 +68,8 @@ export async function initCommand(options: InitOptions): Promise<void> {
   const copied = copyPersonaDir(sourceDir, targetPersonaDir);
   console.log(`  Persona "${chosenName}": ${copied} sound(s) copied to ${targetPersonaDir}`);
 
-  // 2. Activate (writes active.json, registers hooks, updates CLAUDE.md)
-  activatePersona(chosenName, targetDir, mode);
+  // 2. Activate (writes active.json, registers hooks, updates CLAUDE.md, plays start sound)
+  await activatePersona(chosenName, targetDir, mode);
 
   console.log(`\n  claude-persona installed successfully!\n`);
   console.log(`  Active persona: ${chosenName}`);

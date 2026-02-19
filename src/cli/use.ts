@@ -87,8 +87,8 @@ export async function useCommand(name: string | undefined): Promise<void> {
     }
   }
 
-  // Activate: update active.json, re-register hooks, update CLAUDE.md
-  activatePersona(chosenName, configDir, mode);
+  // Activate: update active.json, re-register hooks, update CLAUDE.md, play start sound
+  await activatePersona(chosenName, configDir, mode);
 
   console.log(`\n  Active persona switched to "${chosenName}".`);
 }
