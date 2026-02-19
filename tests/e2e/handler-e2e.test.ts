@@ -163,13 +163,26 @@ describe('Handler E2E', () => {
     });
   });
 
-  it('resolves situation for Notification', () => {
-    handler('Notification');
+  it('resolves situation for Notification (permission_prompt starts nagger)', () => {
+    handler('Notification', { notification_type: 'permission_prompt' });
     const log = readLog();
-    // Notification triggers both nagger start and normal situation
+    // Permission notification triggers both nagger start and normal situation
     const nagEntry = log.find((e) => e.mode === 'nagger');
     const normalEntry = log.find((e) => e.mode === 'normal');
     expect(nagEntry).toMatchObject({ event: 'Notification', nagger: 'started' });
+    expect(normalEntry).toMatchObject({
+      event: 'Notification',
+      situation: 'notification',
+      mode: 'normal',
+    });
+  });
+
+  it('non-permission Notification does NOT start nagger', () => {
+    handler('Notification', { notification_type: 'idle_prompt' });
+    const log = readLog();
+    const nagEntry = log.find((e) => e.mode === 'nagger');
+    const normalEntry = log.find((e) => e.mode === 'normal');
+    expect(nagEntry).toBeUndefined();
     expect(normalEntry).toMatchObject({
       event: 'Notification',
       situation: 'notification',
@@ -312,15 +325,15 @@ describe('Handler E2E', () => {
 
   // ── Nagger lifecycle ──
 
-  it('nagger state file created on Notification, deleted on UserPromptSubmit', () => {
+  it('nagger state file created on permission Notification, deleted on UserPromptSubmit', () => {
     const sessionId = 'nag-lifecycle-test';
     const nagPath = path.join(os.tmpdir(), `claude-persona-nag-${sessionId}.json`);
 
     // Clean up any leftover from previous runs
     try { fs.unlinkSync(nagPath); } catch { /* ignore */ }
 
-    // Notification should create nag state file
-    handler('Notification', { session_id: sessionId });
+    // Permission notification should create nag state file
+    handler('Notification', { session_id: sessionId, notification_type: 'permission_prompt' });
     expect(fs.existsSync(nagPath)).toBe(true);
 
     // UserPromptSubmit should cancel the nagger (delete state file)

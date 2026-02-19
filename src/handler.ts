@@ -131,10 +131,12 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  // Permission timeout nagger: start on Notification, cancel on response/session end
+  // Permission timeout nagger: start on permission Notification, cancel on response/session end
   const sessionId = hookInput.session_id || 'unknown';
   if (hasPermissionTimeoutSituation(personaConfig)) {
-    if (args.event === 'Notification') {
+    if (args.event === 'Notification' && hookInput.notification_type === 'permission_prompt') {
+      // Cancel any existing nagger before starting a new one (dedup)
+      cancelNagger(sessionId);
       const nagSituations = getSituationsForTrigger(personaConfig, 'permission_timeout');
       const nagCfg = nagSituations[0];
       if (nagCfg) {

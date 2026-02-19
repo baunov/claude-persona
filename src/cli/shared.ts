@@ -168,6 +168,11 @@ const GLOBAL_FLAGS_MD_REFERENCE = '@~/.claude-persona/PERSONA_FLAGS.md';
 // Keep the old reference string so we can clean it up from existing installs
 const LEGACY_FLAGS_REFERENCE = '@.claude/persona/PERSONA_FLAGS.md';
 
+/** Section markers for the persona block in CLAUDE.md */
+const PERSONA_SECTION_START = '<!-- claude-persona:start -->';
+const PERSONA_SECTION_END = '<!-- claude-persona:end -->';
+const PERSONA_SECTION_HEADER = '## Always reference and use these as speaking guide';
+
 /** All persona-related references (for cleanup during uninstall) */
 export const ALL_PERSONA_REFERENCES = [
   PERSONA_MD_REFERENCE,
@@ -175,6 +180,9 @@ export const ALL_PERSONA_REFERENCES = [
   GLOBAL_PERSONA_MD_REFERENCE,
   GLOBAL_FLAGS_MD_REFERENCE,
   LEGACY_FLAGS_REFERENCE,
+  PERSONA_SECTION_START,
+  PERSONA_SECTION_END,
+  PERSONA_SECTION_HEADER,
 ];
 
 /**
@@ -238,10 +246,8 @@ export function updateClaudeMdFlags(config: PersonaConfig, mode: 'global' | 'pro
     }
 
     fs.writeFileSync(personaFilePath, content);
-    addClaudeMdReference(claudeMdPath, personaMdRef);
     console.log('  Persona instructions: written to PERSONA.md');
   } else {
-    removeClaudeMdReference(claudeMdPath, personaMdRef);
     if (fs.existsSync(personaFilePath)) {
       fs.unlinkSync(personaFilePath);
     }
@@ -271,10 +277,8 @@ Rules:
 `;
 
     fs.writeFileSync(flagsFilePath, flagsContent);
-    addClaudeMdReference(claudeMdPath, flagsMdRef);
     console.log('  Persona flags: written to PERSONA_FLAGS.md');
   } else {
-    removeClaudeMdReference(claudeMdPath, flagsMdRef);
     if (fs.existsSync(flagsFilePath)) {
       fs.unlinkSync(flagsFilePath);
     }
